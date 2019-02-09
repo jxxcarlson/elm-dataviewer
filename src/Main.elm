@@ -15,6 +15,7 @@ import Element.Input as Input
 import File exposing (File)
 import File.Select as Select
 import Html exposing (Html)
+import LineChart
 import Maybe.Extra
 import Task
 
@@ -185,7 +186,12 @@ numericalDataFromCsv csv =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [] (mainColumn model)
+    Element.layout outerStyle
+        (row [ spacing 24, alignTop ]
+            [ mainColumn model
+            , dataInfoPanel model
+            ]
+        )
 
 
 mainColumn : Model -> Element Msg
@@ -197,7 +203,8 @@ mainColumn model =
                 [ spacing 12 ]
                 [ inputXLabel model, inputYLabel model ]
             , dataDisplay model
-            , footer model
+
+            -- , footer model
             ]
         ]
 
@@ -216,24 +223,158 @@ footer model =
         ]
 
 
+dataInfoPanel : Model -> Element msg
+dataInfoPanel model =
+    column
+        [ spacing 12
+        , Font.size 12
+        , Background.color (rgb255 245 245 245)
+        , width (px 200)
+        , height (px 500)
+        , paddingXY 8 12
+        , moveDown 45
+        ]
+        [ el []
+            (text <| numberOfRecordsString model.csvData)
+        , el []
+            (text <| viewModeAsString model.viewMode)
+        , xDisplay model
+        , yDisplay model
+        ]
+
+
+xDisplay : Model -> Element msg
+xDisplay model =
+    column [ spacing 5 ]
+        [ el [ Font.bold ] (text <| xLabel model)
+        , el []
+            (text <| displayXAverage model.data)
+        , el []
+            (text <| displayXMinimum model.data)
+        , el []
+            (text <| displayXMaximum model.data)
+        ]
+
+
+xLabel : Model -> String
+xLabel model =
+    case model.xLabel of
+        Nothing ->
+            "x"
+
+        Just str ->
+            if str == "" then
+                "x"
+
+            else
+                str
+
+
+yLabel : Model -> String
+yLabel model =
+    case model.yLabel of
+        Nothing ->
+            "y"
+
+        Just str ->
+            if str == "" then
+                "x"
+
+            else
+                str
+
+
+yDisplay : Model -> Element msg
+yDisplay model =
+    column [ spacing 5 ]
+        [ el [ Font.bold ] (text <| yLabel model)
+        , el []
+            (text <| displayYAverage model.data)
+        , el []
+            (text <| displayYMinimum model.data)
+        , el []
+            (text <| displayYMaximum model.data)
+        ]
+
+
+displayXMinimum : Data -> String
+displayXMinimum data =
+    case xMinimum data of
+        Nothing ->
+            "min: ?"
+
+        Just x ->
+            "min: " ++ String.left 6 (String.fromFloat x)
+
+
+displayXMaximum : Data -> String
+displayXMaximum data =
+    case xMaximum data of
+        Nothing ->
+            "max: ?"
+
+        Just x ->
+            "max: " ++ String.left 6 (String.fromFloat x)
+
+
+displayYMinimum : Data -> String
+displayYMinimum data =
+    case yMinimum data of
+        Nothing ->
+            "min: ?"
+
+        Just y ->
+            "min: " ++ String.left 6 (String.fromFloat y)
+
+
+displayYMaximum : Data -> String
+displayYMaximum data =
+    case yMaximum data of
+        Nothing ->
+            "max: ?"
+
+        Just y ->
+            "max: " ++ String.left 6 (String.fromFloat y)
+
+
+xMinimum : Data -> Maybe Float
+xMinimum data =
+    List.minimum data.x
+
+
+xMaximum : Data -> Maybe Float
+xMaximum data =
+    List.maximum data.x
+
+
+yMinimum : Data -> Maybe Float
+yMinimum data =
+    List.minimum data.y
+
+
+yMaximum : Data -> Maybe Float
+yMaximum data =
+    List.maximum data.y
+
+
 displayXAverage : Data -> String
 displayXAverage data =
     case List.length data.x of
         0 ->
-            "x average:?"
+            "average: ?"
 
         _ ->
-            "x average: " ++ String.left 6 (String.fromFloat (xAverage data))
+            "average: " ++ String.left 6 (String.fromFloat (xAverage data))
 
 
 displayYAverage : Data -> String
 displayYAverage data =
     case List.length data.y of
         0 ->
-            "y average: ?"
+            "average: ?"
 
         _ ->
-            "y average: " ++ String.left 6 (String.fromFloat (yAverage data))
+            "average: " ++ String.left 6 (String.fromFloat (yAverage data))
 
 
 viewModeAsString : ViewMode -> String
@@ -327,7 +468,7 @@ openFileButton =
     row [ centerX ]
         [ Input.button buttonStyle
             { onPress = Just CsvRequested
-            , label = el [ centerX, centerY ] (text "Open CSV file")
+            , label = el [] (text "Open CSV file")
             }
         ]
 
@@ -338,8 +479,16 @@ openFileButton =
 --
 
 
+outerStyle =
+    [ Background.color (rgb255 180 180 180)
+    , paddingXY 20 20
+    , height fill
+    , width fill
+    ]
+
+
 mainColumnStyle =
-    [ Background.color (rgb255 200 200 200)
+    [ Background.color (rgb255 180 180 180)
     , paddingXY 20 20
     , height fill
     , width fill
