@@ -15,15 +15,21 @@ import Element.Input as Input
 import File exposing (File)
 import File.Select as Select
 import Html exposing (Html)
+import Html.Attributes as HA
 import LineChart
 import Maybe.Extra
+import Svg exposing (Svg)
 import Task
 
 
-type alias Data =
-    { x : List Float
-    , y : List Float
+type alias Point =
+    { x : Float
+    , y : Float
     }
+
+
+type alias Data =
+    List Point
 
 
 type ViewMode
@@ -70,7 +76,7 @@ init flags =
     ( { filename = "no file yet"
       , csvText = Nothing
       , csvData = Nothing
-      , data = { x = [], y = [] }
+      , data = []
       , viewMode = RawDataView
       , xLabel = Nothing
       , yLabel = Nothing
@@ -114,7 +120,7 @@ update msg model =
                 numericalData =
                     case csvData of
                         Nothing ->
-                            { x = [], y = [] }
+                            []
 
                         Just data ->
                             numericalDataFromCsv data
@@ -128,10 +134,10 @@ xAverage : Data -> Float
 xAverage data =
     let
         n =
-            List.length data.x
+            List.length (List.map .x data)
 
         sum =
-            List.sum data.x
+            List.sum (List.map .x data)
     in
     sum / toFloat n
 
@@ -140,10 +146,10 @@ yAverage : Data -> Float
 yAverage data =
     let
         n =
-            List.length data.y
+            List.length (List.map .y data)
 
         sum =
-            List.sum data.y
+            List.sum (List.map .y data)
     in
     sum / toFloat n
 
@@ -173,9 +179,14 @@ yValuesFromCsv csv =
 
 numericalDataFromCsv : Csv -> Data
 numericalDataFromCsv csv =
-    { x = xValuesFromCsv csv
-    , y = yValuesFromCsv csv
-    }
+    let
+        xs =
+            xValuesFromCsv csv
+
+        ys =
+            yValuesFromCsv csv
+    in
+    List.map2 Point xs ys
 
 
 
@@ -190,6 +201,7 @@ view model =
         (row [ spacing 24, alignTop ]
             [ mainColumn model
             , dataInfoPanel model
+            , visualDataDisplay model
             ]
         )
 
@@ -198,15 +210,23 @@ mainColumn : Model -> Element Msg
 mainColumn model =
     column mainColumnStyle
         [ column [ spacing 20 ]
-            [ row [ spacing 24 ] [ title "Data Explorer", openFileButton ]
-            , row
-                [ spacing 12 ]
+            [ column [ spacing 8 ] [ title "Data Explorer", openFileButton ]
+            , column
+                [ spacing 8 ]
                 [ inputXLabel model, inputYLabel model ]
             , dataDisplay model
-
-            -- , footer model
             ]
         ]
+
+
+visualDataDisplay : Model -> Element msg
+visualDataDisplay model =
+    row
+        [ Font.size 12
+        , width (px 800)
+        , height (px 600)
+        ]
+        [ Element.html (chart model) ]
 
 
 footer : Model -> Element msg
@@ -223,6 +243,11 @@ footer model =
         ]
 
 
+chart : Model -> Svg msg
+chart model =
+    LineChart.view1 .x .y model.data
+
+
 dataInfoPanel : Model -> Element msg
 dataInfoPanel model =
     column
@@ -230,9 +255,9 @@ dataInfoPanel model =
         , Font.size 12
         , Background.color (rgb255 245 245 245)
         , width (px 200)
-        , height (px 500)
+        , height (px 510)
         , paddingXY 8 12
-        , moveDown 45
+        , moveDown 40
         ]
         [ el []
             (text <| numberOfRecordsString model.csvData)
@@ -339,27 +364,27 @@ displayYMaximum data =
 
 xMinimum : Data -> Maybe Float
 xMinimum data =
-    List.minimum data.x
+    List.minimum (List.map .x data)
 
 
 xMaximum : Data -> Maybe Float
 xMaximum data =
-    List.maximum data.x
+    List.maximum (List.map .x data)
 
 
 yMinimum : Data -> Maybe Float
 yMinimum data =
-    List.minimum data.y
+    List.minimum (List.map .y data)
 
 
 yMaximum : Data -> Maybe Float
 yMaximum data =
-    List.maximum data.y
+    List.maximum (List.map .y data)
 
 
 displayXAverage : Data -> String
 displayXAverage data =
-    case List.length data.x of
+    case List.length (List.map .x data) of
         0 ->
             "average: ?"
 
@@ -369,7 +394,7 @@ displayXAverage data =
 
 displayYAverage : Data -> String
 displayYAverage data =
-    case List.length data.y of
+    case List.length (List.map .y data) of
         0 ->
             "average: ?"
 
@@ -415,8 +440,8 @@ dataDisplay model =
     in
     row
         [ Background.color (rgb255 245 245 245)
-        , width <| px 350
-        , height <| px 500
+        , width <| px 200
+        , height <| px 450
         , scrollbarY
         , Font.size 12
         , paddingXY 8 12
@@ -455,7 +480,7 @@ inputYLabel model =
                 Just str ->
                     str
     in
-    Input.text [ height (px 18), Font.size 12, paddingXY 8 0 ]
+    Input.text [ height (px 18), Font.size 12, paddingXY 8 0, width (px 185) ]
         { onChange = InputYLabel
         , text = labelText
         , placeholder = Nothing
