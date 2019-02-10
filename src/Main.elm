@@ -17,6 +17,8 @@ import File.Select as Select
 import Html exposing (Html)
 import Html.Attributes as HA
 import LineChart
+import LineChart.Colors as Colors
+import LineChart.Dots as Dots
 import Maybe.Extra
 import Svg exposing (Svg)
 import Task
@@ -243,9 +245,14 @@ footer model =
         ]
 
 
+chart1 : Model -> Svg msg
+chart1 model =
+    LineChart.view1 .x .y model.data
+
+
 chart : Model -> Svg msg
 chart model =
-    LineChart.view1 .x .y model.data
+    LineChart.view .x .y [ LineChart.line Colors.red Dots.none "" model.data ]
 
 
 dataInfoPanel : Model -> Element msg
