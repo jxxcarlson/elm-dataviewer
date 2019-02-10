@@ -8,6 +8,8 @@ module Main exposing (main)
 
 import Browser
 import Csv exposing (Csv)
+import CsvData
+import Display
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
@@ -21,6 +23,7 @@ import LineChart.Colors as Colors
 import LineChart.Dots as Dots
 import Maybe.Extra
 import Stat exposing (Data, Point)
+import Style
 import Svg exposing (Svg)
 import Task
 
@@ -108,7 +111,7 @@ update msg model =
         CsvLoaded content ->
             let
                 csvData =
-                    getCsvData content
+                    CsvData.get content
 
                 numericalData =
                     case csvData of
@@ -116,70 +119,11 @@ update msg model =
                             []
 
                         Just data ->
-                            numericalDataFromCsv data
+                            CsvData.toPointList data
             in
             ( { model | csvText = Just content, csvData = csvData, data = numericalData }
             , Cmd.none
             )
-
-
-xAverage : Data -> Float
-xAverage data =
-    let
-        n =
-            List.length (List.map .x data)
-
-        sum =
-            List.sum (List.map .x data)
-    in
-    sum / toFloat n
-
-
-yAverage : Data -> Float
-yAverage data =
-    let
-        n =
-            List.length (List.map .y data)
-
-        sum =
-            List.sum (List.map .y data)
-    in
-    sum / toFloat n
-
-
-getCsvData : String -> Maybe Csv
-getCsvData str =
-    Just <| Csv.parse ("x,y\n" ++ str)
-
-
-xValuesFromCsv : Csv -> List Float
-xValuesFromCsv csv =
-    let
-        xValuesAsString =
-            List.map List.head csv.records |> Maybe.Extra.values
-    in
-    List.map String.toFloat xValuesAsString |> Maybe.Extra.values
-
-
-yValuesFromCsv : Csv -> List Float
-yValuesFromCsv csv =
-    let
-        yValuesAsString =
-            List.map (List.head << List.drop 1) csv.records |> Maybe.Extra.values
-    in
-    List.map String.toFloat yValuesAsString |> Maybe.Extra.values
-
-
-numericalDataFromCsv : Csv -> Data
-numericalDataFromCsv csv =
-    let
-        xs =
-            xValuesFromCsv csv
-
-        ys =
-            yValuesFromCsv csv
-    in
-    List.map2 Point xs ys
 
 
 
@@ -190,7 +134,7 @@ numericalDataFromCsv csv =
 
 view : Model -> Html Msg
 view model =
-    Element.layout outerStyle
+    Element.layout Style.outer
         (row [ spacing 24, alignTop ]
             [ mainColumn model
             , dataInfoPanel model
@@ -201,7 +145,7 @@ view model =
 
 mainColumn : Model -> Element Msg
 mainColumn model =
-    column mainColumnStyle
+    column Style.mainColumn
         [ column [ spacing 20 ]
             [ column [ spacing 8 ] [ title "Data Explorer", openFileButton ]
             , column
@@ -220,20 +164,6 @@ visualDataDisplay model =
         , height (px 600)
         ]
         [ Element.html (chart model) ]
-
-
-footer : Model -> Element msg
-footer model =
-    row [ spacing 18, Font.size 12 ]
-        [ el []
-            (text <| numberOfRecordsString model.csvData)
-        , el []
-            (text <| viewModeAsString model.viewMode)
-        , el []
-            (text <| displayXAverage model.data)
-        , el []
-            (text <| displayYAverage model.data)
-        ]
 
 
 chart1 : Model -> Svg msg
@@ -261,143 +191,9 @@ dataInfoPanel model =
             (text <| numberOfRecordsString model.csvData)
         , el []
             (text <| viewModeAsString model.viewMode)
-        , xDisplay model
-        , yDisplay model
+        , Display.info "x" model.xLabel .x model.data
+        , Display.info "y" model.yLabel .y model.data
         ]
-
-
-xDisplay : Model -> Element msg
-xDisplay model =
-    column [ spacing 5 ]
-        [ el [ Font.bold ] (text <| xLabel model)
-        , el []
-            (text <| displayXAverage model.data)
-        , el []
-            (text <| displayXMinimum model.data)
-        , el []
-            (text <| displayXMaximum model.data)
-        ]
-
-
-xLabel : Model -> String
-xLabel model =
-    case model.xLabel of
-        Nothing ->
-            "x"
-
-        Just str ->
-            if str == "" then
-                "x"
-
-            else
-                str
-
-
-yLabel : Model -> String
-yLabel model =
-    case model.yLabel of
-        Nothing ->
-            "y"
-
-        Just str ->
-            if str == "" then
-                "x"
-
-            else
-                str
-
-
-yDisplay : Model -> Element msg
-yDisplay model =
-    column [ spacing 5 ]
-        [ el [ Font.bold ] (text <| yLabel model)
-        , el []
-            (text <| displayYAverage model.data)
-        , el []
-            (text <| displayYMinimum model.data)
-        , el []
-            (text <| displayYMaximum model.data)
-        ]
-
-
-displayXMinimum : Data -> String
-displayXMinimum data =
-    case xMinimum data of
-        Nothing ->
-            "min: ?"
-
-        Just x ->
-            "min: " ++ String.left 6 (String.fromFloat x)
-
-
-displayXMaximum : Data -> String
-displayXMaximum data =
-    case xMaximum data of
-        Nothing ->
-            "max: ?"
-
-        Just x ->
-            "max: " ++ String.left 6 (String.fromFloat x)
-
-
-displayYMinimum : Data -> String
-displayYMinimum data =
-    case yMinimum data of
-        Nothing ->
-            "min: ?"
-
-        Just y ->
-            "min: " ++ String.left 6 (String.fromFloat y)
-
-
-displayYMaximum : Data -> String
-displayYMaximum data =
-    case yMaximum data of
-        Nothing ->
-            "max: ?"
-
-        Just y ->
-            "max: " ++ String.left 6 (String.fromFloat y)
-
-
-xMinimum : Data -> Maybe Float
-xMinimum data =
-    List.minimum (List.map .x data)
-
-
-xMaximum : Data -> Maybe Float
-xMaximum data =
-    List.maximum (List.map .x data)
-
-
-yMinimum : Data -> Maybe Float
-yMinimum data =
-    List.minimum (List.map .y data)
-
-
-yMaximum : Data -> Maybe Float
-yMaximum data =
-    List.maximum (List.map .y data)
-
-
-displayXAverage : Data -> String
-displayXAverage data =
-    case List.length (List.map .x data) of
-        0 ->
-            "average: ?"
-
-        _ ->
-            "average: " ++ String.left 6 (String.fromFloat (xAverage data))
-
-
-displayYAverage : Data -> String
-displayYAverage data =
-    case List.length (List.map .y data) of
-        0 ->
-            "average: ?"
-
-        _ ->
-            "average: " ++ String.left 6 (String.fromFloat (yAverage data))
 
 
 viewModeAsString : ViewMode -> String
@@ -489,38 +285,8 @@ inputYLabel model =
 openFileButton : Element Msg
 openFileButton =
     row [ centerX ]
-        [ Input.button buttonStyle
+        [ Input.button Style.button
             { onPress = Just CsvRequested
             , label = el [] (text "Open CSV file")
             }
         ]
-
-
-
---
--- STYLE
---
-
-
-outerStyle =
-    [ Background.color (rgb255 180 180 180)
-    , paddingXY 20 20
-    , height fill
-    , width fill
-    ]
-
-
-mainColumnStyle =
-    [ Background.color (rgb255 180 180 180)
-    , paddingXY 20 20
-    , height fill
-    , width fill
-    ]
-
-
-buttonStyle =
-    [ Background.color (rgb255 40 40 40)
-    , Font.color (rgb255 255 255 255)
-    , paddingXY 15 8
-    , Font.size 14
-    ]
