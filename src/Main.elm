@@ -20,18 +20,9 @@ import LineChart
 import LineChart.Colors as Colors
 import LineChart.Dots as Dots
 import Maybe.Extra
+import Stat exposing (Data, Point)
 import Svg exposing (Svg)
 import Task
-
-
-type alias Point =
-    { x : Float
-    , y : Float
-    }
-
-
-type alias Data =
-    List Point
 
 
 type ViewMode
