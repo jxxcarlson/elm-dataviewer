@@ -1,4 +1,4 @@
-module Stat exposing (Data, Point, average, maximum, minimum, stdev)
+module Stat exposing (Data, Point, Statistics, average, maximum, minimum, statistics, stdev)
 
 
 type alias Point =
@@ -53,6 +53,100 @@ stdev selector dataList =
                     List.map (\x -> square (x - mean)) (List.map selector dataList)
             in
             Just <| List.sum squaredDifferences / toFloat (n - 1)
+
+
+type alias Statistics =
+    { a : Float
+    , b : Float
+    , xMin : Float
+    , xMax : Float
+    , leftDataPoint : Point
+    , rightDataPoint : Point
+    , regressionPoint : Point
+    }
+
+
+statistics : Data -> Maybe Statistics
+statistics data =
+    let
+        m =
+            List.length data
+    in
+    case m < 2 of
+        True ->
+            Nothing
+
+        False ->
+            let
+                n =
+                    toFloat m
+
+                xs =
+                    List.map .x data
+
+                ys =
+                    List.map .y data
+
+                xMin =
+                    minimum .x data |> Maybe.withDefault 0
+
+                xMax =
+                    maximum .x data |> Maybe.withDefault 0
+
+                origin =
+                    Point 0 0
+
+                leftDataPoint =
+                    data |> List.filter (\point -> .x point == xMin) |> List.head |> Maybe.withDefault origin
+
+                rightDataPoint =
+                    data |> List.filter (\point -> .x point == xMax) |> List.head |> Maybe.withDefault origin
+
+                xSum =
+                    List.sum xs
+
+                xMean =
+                    xSum / n
+
+                ySum =
+                    List.sum ys
+
+                yMean =
+                    ySum / n
+
+                xsSquared =
+                    List.sum (List.map (\x -> x * x) xs)
+
+                xySum =
+                    List.map2 (*) xs ys |> List.sum
+
+                square x =
+                    x * x
+
+                xDeltaSquaredSum =
+                    xs |> List.map (\x -> square (x - xMean)) |> List.sum
+
+                determinant =
+                    n * xDeltaSquaredSum
+
+                a =
+                    (1 / determinant) * (n * xySum - xSum * ySum)
+
+                b =
+                    (1 / determinant) * (-xSum * xySum + xsSquared * ySum)
+
+                regressionPoint =
+                    { x = rightDataPoint.x, y = a * rightDataPoint.x + b }
+            in
+            Just
+                { xMax = xMax
+                , xMin = xMin
+                , a = a
+                , b = b
+                , leftDataPoint = leftDataPoint
+                , rightDataPoint = rightDataPoint
+                , regressionPoint = regressionPoint
+                }
 
 
 minimum : (data -> Float) -> List data -> Maybe Float

@@ -22,15 +22,15 @@ import LineChart
 import LineChart.Colors as Colors
 import LineChart.Dots as Dots
 import Maybe.Extra
-import Stat exposing (Data, Point)
+import Stat exposing (Data, Point, Statistics, statistics)
 import Style
 import Svg exposing (Svg)
 import Task
 
 
-type ViewMode
-    = RawDataView
-    | CsvView
+type PlotType
+    = TimeSeries
+    | ScatterPlot
 
 
 main =
@@ -47,9 +47,10 @@ type alias Model =
     , csvText : Maybe String
     , csvData : Maybe Csv
     , data : Data
+    , statistics : Maybe Statistics
     , xLabel : Maybe String
     , yLabel : Maybe String
-    , viewMode : ViewMode
+    , plotType : PlotType
     , output : String
     }
 
@@ -73,7 +74,8 @@ init flags =
       , csvText = Nothing
       , csvData = Nothing
       , data = []
-      , viewMode = RawDataView
+      , statistics = Nothing
+      , plotType = TimeSeries
       , xLabel = Nothing
       , yLabel = Nothing
       , output = "Ready!"
@@ -120,8 +122,21 @@ update msg model =
 
                         Just data ->
                             CsvData.toPointList data
+
+                statistics =
+                    case numericalData of
+                        [] ->
+                            Nothing
+
+                        dataList ->
+                            Stat.statistics dataList
             in
-            ( { model | csvText = Just content, csvData = csvData, data = numericalData }
+            ( { model
+                | csvText = Just content
+                , csvData = csvData
+                , data = numericalData
+                , statistics = statistics
+              }
             , Cmd.none
             )
 
@@ -137,7 +152,7 @@ view model =
     Element.layout Style.outer
         (row [ spacing 24, alignTop ]
             [ mainColumn model
-            , dataInfoPanel model
+            , statisticsPanel model
             , visualDataDisplay model
             ]
         )
@@ -151,9 +166,15 @@ mainColumn model =
             , column
                 [ spacing 8 ]
                 [ inputXLabel model, inputYLabel model ]
-            , dataDisplay model
+            , rawDataDisplay model
             ]
         ]
+
+
+
+--
+-- CHART
+--
 
 
 visualDataDisplay : Model -> Element msg
@@ -166,18 +187,28 @@ visualDataDisplay model =
         [ Element.html (chart model) ]
 
 
-chart1 : Model -> Svg msg
-chart1 model =
-    LineChart.view1 .x .y model.data
-
-
 chart : Model -> Svg msg
 chart model =
-    LineChart.view .x .y [ LineChart.line Colors.red Dots.none "" model.data ]
+    case model.statistics of
+        Nothing ->
+            LineChart.view .x .y [ LineChart.line Colors.red Dots.none "Data" model.data ]
+
+        Just stats ->
+            LineChart.view .x
+                .y
+                [ LineChart.line Colors.red Dots.none "Data" model.data
+                , LineChart.line Colors.blue Dots.none "Regression" [ stats.leftDataPoint, stats.regressionPoint ]
+                ]
 
 
-dataInfoPanel : Model -> Element msg
-dataInfoPanel model =
+
+--
+-- STATISTICS
+--
+
+
+statisticsPanel : Model -> Element msg
+statisticsPanel model =
     column
         [ spacing 12
         , Font.size 12
@@ -190,20 +221,27 @@ dataInfoPanel model =
         [ el []
             (text <| numberOfRecordsString model.csvData)
         , el []
-            (text <| viewModeAsString model.viewMode)
+            (text <| plotTypeAsString model.plotType)
         , Display.info "x" model.xLabel .x model.data
         , Display.info "y" model.yLabel .y model.data
+        , Display.correlationInfo model.data
         ]
 
 
-viewModeAsString : ViewMode -> String
-viewModeAsString viewMode =
-    case viewMode of
-        RawDataView ->
-            "View: Raw data"
+plotTypeAsString : PlotType -> String
+plotTypeAsString plotType =
+    case plotType of
+        TimeSeries ->
+            "Plot: time series"
 
-        CsvView ->
-            "View: Csv"
+        ScatterPlot ->
+            "Plot: scatter"
+
+
+
+--
+-- RAW DATA DISPLAY
+--
 
 
 numberOfRecordsString : Maybe Csv -> String
@@ -221,8 +259,8 @@ title str =
     row [ centerX, Font.bold ] [ text str ]
 
 
-dataDisplay : Model -> Element msg
-dataDisplay model =
+rawDataDisplay : Model -> Element msg
+rawDataDisplay model =
     let
         content =
             case model.csvText of
@@ -242,6 +280,12 @@ dataDisplay model =
         , alignTop
         ]
         [ text content ]
+
+
+
+--
+-- INPUT FIELDS
+--
 
 
 inputXLabel : Model -> Element Msg
@@ -280,6 +324,12 @@ inputYLabel model =
         , placeholder = Nothing
         , label = Input.labelLeft [] <| el [ moveDown 4 ] (text "Y:")
         }
+
+
+
+--
+-- BUTTONS
+--
 
 
 openFileButton : Element Msg
