@@ -54,9 +54,9 @@ displayMaximum selector data =
 
 displayAverage : (Point -> Float) -> Data -> String
 displayAverage selector data =
-    case List.length (List.map selector data) of
-        0 ->
+    case Stat.average selector data of
+        Nothing ->
             "average: ?"
 
-        _ ->
-            "average: " ++ String.left 6 (String.fromFloat (Stat.average selector data))
+        Just value ->
+            "average: " ++ String.left 6 (String.fromFloat value)
