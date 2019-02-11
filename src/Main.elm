@@ -160,16 +160,25 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Element.layout Style.outer
-        (row [ spacing 24, alignTop ]
-            [ mainColumn model
-            , statisticsPanel model
-            , visualDataDisplay model
+        (column
+            [ height fill ]
+            [ mainRow model
+            , footer model
             ]
         )
 
 
-mainColumn : Model -> Element Msg
-mainColumn model =
+mainRow : Model -> Element Msg
+mainRow model =
+    row [ spacing 24, alignTop ]
+        [ dataColumn model
+        , statisticsPanel model
+        , visualDataDisplay model
+        ]
+
+
+dataColumn : Model -> Element Msg
+dataColumn model =
     column Style.mainColumn
         [ column [ spacing 20 ]
             [ column [ spacing 8 ] [ title "Data Explorer", openFileButton ]
@@ -179,6 +188,20 @@ mainColumn model =
             , rawDataDisplay model
             ]
         ]
+
+
+footer : Model -> Element Msg
+footer model =
+    row Style.footer
+        [ downloadSampleCsvFile ]
+
+
+downloadSampleCsvFile : Element Msg
+downloadSampleCsvFile =
+    download Style.link
+        { url = "https://jxxcarlson.github.io/app/temperature-anomalies.csv"
+        , label = el [] (text "Download sample data.csv file")
+        }
 
 
 

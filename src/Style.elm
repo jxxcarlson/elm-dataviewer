@@ -1,4 +1,4 @@
-module Style exposing (button, mainColumn, outer, table)
+module Style exposing (button, footer, link, mainColumn, outer, table)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -13,7 +13,6 @@ import Element.Font as Font
 
 outer =
     [ Background.color (rgb255 180 180 180)
-    , paddingXY 20 20
     , height fill
     , width fill
     ]
@@ -24,6 +23,21 @@ mainColumn =
     , paddingXY 20 20
     , height fill
     , width fill
+    ]
+
+
+footer =
+    [ Background.color (rgb255 40 40 40)
+    , Font.color (rgb 250 250 250)
+    , Font.size 14
+    , paddingXY 20 5
+    , height (px 30)
+    , width fill
+    ]
+
+
+link =
+    [ Font.color (rgb 100 100 240)
     ]
 
 
