@@ -1,4 +1,4 @@
-module Display exposing (correlationInfo, info)
+module Display exposing (correlationInfo, info, label, stringOfFloat)
 
 import Element exposing (..)
 import Element.Font as Font
@@ -34,9 +34,9 @@ correlationInfo data =
             column [ spacing 5 ]
                 [ el [ Font.bold ] (text <| "Correlation info (y = mx + b)")
                 , el []
-                    (text <| "m: " ++ floatDisplay stats.a)
+                    (text <| "m: " ++ stringOfFloat stats.a)
                 , el []
-                    (text <| "b: " ++ floatDisplay stats.b)
+                    (text <| "b: " ++ stringOfFloat stats.b)
                 ]
 
 
@@ -46,8 +46,8 @@ correlationInfo data =
 --
 
 
-floatDisplay : Float -> String
-floatDisplay value =
+stringOfFloat : Float -> String
+stringOfFloat value =
     String.left 6 <| String.fromFloat value
 
 
@@ -72,7 +72,7 @@ displayMinimum selector data =
             "min: ?"
 
         Just value ->
-            "min: " ++ String.left 6 (String.fromFloat value)
+            "min: " ++ stringOfFloat value
 
 
 displayMaximum : (Point -> Float) -> Data -> String
@@ -82,7 +82,7 @@ displayMaximum selector data =
             "max: ?"
 
         Just value ->
-            "max: " ++ String.left 6 (String.fromFloat value)
+            "max: " ++ stringOfFloat value
 
 
 displayAverage : (Point -> Float) -> Data -> String
@@ -92,7 +92,7 @@ displayAverage selector data =
             "average: ?"
 
         Just value ->
-            "average: " ++ String.left 6 (String.fromFloat value)
+            "average: " ++ stringOfFloat value
 
 
 displayStdev : (Point -> Float) -> Data -> String
@@ -102,4 +102,4 @@ displayStdev selector data =
             "stdev: ?"
 
         Just value ->
-            "stdev: " ++ String.left 6 (String.fromFloat value)
+            "stdev: " ++ stringOfFloat value

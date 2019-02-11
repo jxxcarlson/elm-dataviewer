@@ -261,25 +261,23 @@ title str =
 
 rawDataDisplay : Model -> Element msg
 rawDataDisplay model =
-    let
-        content =
-            case model.csvText of
-                Nothing ->
-                    "No data yet"
-
-                Just data ->
-                    data
-    in
-    row
-        [ Background.color (rgb255 245 245 245)
-        , width <| px 200
-        , height <| px 450
-        , scrollbarY
-        , Font.size 12
-        , paddingXY 8 12
-        , alignTop
-        ]
-        [ text content ]
+    table Style.table
+        { data = model.data
+        , columns =
+            [ { header = Element.text (Display.label "x" model.xLabel)
+              , width = fill
+              , view =
+                    \point ->
+                        Element.text <| Display.stringOfFloat point.x
+              }
+            , { header = Element.text (Display.label "y" model.yLabel)
+              , width = fill
+              , view =
+                    \point ->
+                        Element.text <| Display.stringOfFloat point.y
+              }
+            ]
+        }
 
 
 

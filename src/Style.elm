@@ -1,4 +1,4 @@
-module Style exposing (button, mainColumn, outer)
+module Style exposing (button, mainColumn, outer, table)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -32,4 +32,15 @@ button =
     , Font.color (rgb255 255 255 255)
     , paddingXY 15 8
     , Font.size 14
+    ]
+
+
+table =
+    [ Background.color (rgb255 245 245 245)
+    , width <| px 200
+    , height <| px 450
+    , scrollbarY
+    , Font.size 12
+    , paddingXY 8 12
+    , alignTop
     ]
