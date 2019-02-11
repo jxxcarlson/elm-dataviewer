@@ -1,4 +1,4 @@
-module Stat exposing (Data, Point, Statistics, average, maximum, minimum, statistics, stdev)
+module Stat exposing (Data, Point, Statistics, average, filterData, maximum, minimum, statistics, stdev)
 
 
 type alias Point =
@@ -21,6 +21,22 @@ type alias Statistics =
     , rightDataPoint : Point
     , regressionPoint : Point
     }
+
+
+type alias Filter =
+    { xMin : Maybe Float
+    , xMax : Maybe Float
+    }
+
+
+filterData : Filter -> Data -> Data
+filterData filter data =
+    case ( filter.xMin, filter.xMax ) of
+        ( Just xMin, Just xMax ) ->
+            List.filter (\point -> point.x >= xMin && point.x <= xMax) data
+
+        ( _, _ ) ->
+            data
 
 
 statistics : Data -> Maybe Statistics

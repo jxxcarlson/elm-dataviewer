@@ -1,4 +1,4 @@
-module CsvData exposing (csv2, csv3, get, getColumn, getColumnAsFloats, intelligentGet, toPointList)
+module CsvData exposing (get, getColumn, getColumnAsFloats, intelligentGet, toPointList)
 
 import Csv exposing (Csv)
 import List.Extra
@@ -6,19 +6,37 @@ import Maybe.Extra
 import Stat exposing (Data, Point)
 
 
-csv2 =
-    "bla bla bla\nx,y\n0, 1\n1,2\n2,4"
+type alias DataState =
+    { headerStatus : HeaderStatus
+    , sep : String
+    , columns : Int
+    }
 
 
-csv3 =
-    "x,y,z\n0, 1, 1\n1,2,4\n2,4,7"
+type HeaderStatus
+    = HeaderPresent
+    | HeaderMissing
+    | HeaderUndetermined
 
 
+{-| Return a Csv value for the string after
+filtering out obvious bad fields (no commaa)
+-}
 get : String -> Maybe Csv
 get str =
     Just <| Csv.parse <| filter str
 
 
+{-| Find the DataState of the string `str` using
+a given separator, e.g., "," and attempt to Return
+a pair `(Just csvData, Just headerString)`. To do this,
+first find the `DataState` of the input string. If it is
+Nothing, representing invalid data, return `(Nothing, Nothing)`.
+Otherwise, return `(Just csvData, Just headerString)`
+Notice that if the data consists of a single column, it
+assumed to be a time series and so is augmented by prepending
+a column `1,2,3, ...` using `makeSeries`.
+-}
 intelligentGet : String -> String -> ( Maybe Csv, Maybe String )
 intelligentGet sep str =
     case dataState sep str of
@@ -38,23 +56,10 @@ makeSeries str =
     let
         str2 =
             String.lines str
-                |> List.indexedMap (\n x -> String.fromInt n ++ "," ++ x)
+                |> List.indexedMap (\n x -> String.fromInt (n + 1) ++ "," ++ x)
                 |> String.join "\n"
     in
     get <| "n,value\n" ++ str2
-
-
-type alias DataState =
-    { headerStatus : HeaderStatus
-    , sep : String
-    , columns : Int
-    }
-
-
-type HeaderStatus
-    = HeaderPresent
-    | HeaderMissing
-    | HeaderUndetermined
 
 
 {-| Return Nothing if the string does not

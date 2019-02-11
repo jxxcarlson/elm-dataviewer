@@ -42,10 +42,11 @@ link =
 
 
 button =
-    [ Background.color (rgb255 40 40 40)
+    [ Background.color (rgb255 100 100 100)
     , Font.color (rgb255 255 255 255)
     , paddingXY 15 8
     , Font.size 14
+    , centerX
     ]
 
 

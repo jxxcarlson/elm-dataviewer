@@ -59,8 +59,10 @@ type alias Model =
     , csvData : Maybe Csv
     , data : Data
     , header : Maybe String
-    , xMin : Maybe String
-    , xMax : Maybe String
+    , xMinOriginal : Maybe Float
+    , xMaxOriginal : Maybe Float
+    , xMin : Maybe Float
+    , xMax : Maybe Float
     , statistics : Maybe Statistics
     , xLabel : Maybe String
     , yLabel : Maybe String
@@ -78,6 +80,8 @@ type Msg
     | CsvRequested
     | CsvSelected File
     | CsvLoaded String
+    | Recompute
+    | Reset
 
 
 type alias Flags =
@@ -90,6 +94,8 @@ init flags =
       , csvText = Nothing
       , csvData = Nothing
       , data = []
+      , xMinOriginal = Nothing
+      , xMaxOriginal = Nothing
       , xMax = Nothing
       , xMin = Nothing
       , header = Nothing
@@ -120,10 +126,10 @@ update msg model =
             ( { model | yLabel = Just str }, Cmd.none )
 
         InputXMin str ->
-            ( { model | xMin = Just str }, Cmd.none )
+            ( { model | xMin = String.toFloat str }, Cmd.none )
 
         InputXMax str ->
-            ( { model | xMax = Just str }, Cmd.none )
+            ( { model | xMax = String.toFloat str }, Cmd.none )
 
         CsvRequested ->
             ( model
@@ -134,6 +140,30 @@ update msg model =
             ( model
             , Task.perform CsvLoaded (File.toString file)
             )
+
+        Reset ->
+            ( { model | xMin = model.xMinOriginal, xMax = model.xMaxOriginal }, Cmd.none )
+
+        Recompute ->
+            let
+                numericalData =
+                    case model.csvData of
+                        Nothing ->
+                            []
+
+                        Just data ->
+                            CsvData.toPointList 0 1 data
+                                |> Stat.filterData { xMin = model.xMin, xMax = model.xMax }
+
+                statistics =
+                    case numericalData of
+                        [] ->
+                            Nothing
+
+                        dataList ->
+                            Stat.statistics dataList
+            in
+            ( { model | data = numericalData, statistics = statistics }, Cmd.none )
 
         CsvLoaded content ->
             let
@@ -179,6 +209,10 @@ update msg model =
                 , header = header
                 , xLabel = xLabel
                 , yLabel = yLabel
+                , xMin = Maybe.map .xMin statistics
+                , xMax = Maybe.map .xMax statistics
+                , xMinOriginal = Maybe.map .xMin statistics
+                , xMaxOriginal = Maybe.map .xMax statistics
                 , statistics = statistics
               }
             , Cmd.none
@@ -316,7 +350,7 @@ statisticsPanel model =
         , width (px 200)
         , height (px 515)
         , paddingXY 8 12
-        , moveDown 40
+        , moveDown 25
         ]
         [ el []
             (text <| numberOfRecordsString model.csvData)
@@ -327,6 +361,8 @@ statisticsPanel model =
         , showIfNot (model.csvData == Nothing) <| Display.correlationInfo model.data
         , showIfNot (model.csvData == Nothing) <| inputXMin model
         , showIfNot (model.csvData == Nothing) <| inputXMax model
+        , showIfNot (model.csvData == Nothing) <| recomputeButton
+        , showIfNot (model.csvData == Nothing) <| resetButton
         ]
 
 
@@ -422,7 +458,7 @@ inputXMin : Model -> Element Msg
 inputXMin model =
     Input.text [ height (px 18), Font.size 12, paddingXY 8 0 ]
         { onChange = InputXMin
-        , text = Display.label "xMin ..." model.xMin
+        , text = Display.label "xMin ..." (Maybe.map String.fromFloat model.xMin)
         , placeholder = Nothing
         , label = Input.labelLeft [ moveDown 4 ] <| el [] (text "x min:")
         }
@@ -432,7 +468,7 @@ inputXMax : Model -> Element Msg
 inputXMax model =
     Input.text [ height (px 18), Font.size 12, paddingXY 8 0 ]
         { onChange = InputXMax
-        , text = Display.label "xMax ..." model.xMax
+        , text = Display.label "xMax ..." (Maybe.map String.fromFloat model.xMax)
         , placeholder = Nothing
         , label = Input.labelLeft [ moveDown 4 ] <| el [] (text "x max:")
         }
@@ -488,5 +524,25 @@ openFileButton =
         [ Input.button Style.button
             { onPress = Just CsvRequested
             , label = el [] (text "Open CSV file")
+            }
+        ]
+
+
+recomputeButton : Element Msg
+recomputeButton =
+    row [ centerX ]
+        [ Input.button Style.button
+            { onPress = Just Recompute
+            , label = el [ centerX, width (px 85) ] (text "Recompute")
+            }
+        ]
+
+
+resetButton : Element Msg
+resetButton =
+    row [ centerX ]
+        [ Input.button Style.button
+            { onPress = Just Reset
+            , label = el [ centerX, width (px 85) ] (text "Reset")
             }
         ]
