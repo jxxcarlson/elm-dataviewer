@@ -31,6 +31,7 @@ import LineChart.Interpolation as Interpolation
 import LineChart.Junk as Junk
 import LineChart.Legends as Legends
 import LineChart.Line as Line
+import List.Extra
 import Maybe.Extra
 import Stat exposing (Data, Point, Statistics, statistics)
 import Style
@@ -57,6 +58,7 @@ type alias Model =
     , csvText : Maybe String
     , csvData : Maybe Csv
     , data : Data
+    , header : String
     , statistics : Maybe Statistics
     , xLabel : Maybe String
     , yLabel : Maybe String
@@ -84,6 +86,7 @@ init flags =
       , csvText = Nothing
       , csvData = Nothing
       , data = []
+      , header = ""
       , statistics = Nothing
       , plotType = TimeSeries
       , xLabel = Nothing
@@ -123,7 +126,23 @@ update msg model =
         CsvLoaded content ->
             let
                 csvData =
-                    CsvData.get content
+                    CsvData.get (CsvData.getDataString content)
+
+                xLabel =
+                    case csvData of
+                        Nothing ->
+                            Nothing
+
+                        Just data ->
+                            List.Extra.getAt 0 data.headers
+
+                yLabel =
+                    case csvData of
+                        Nothing ->
+                            Nothing
+
+                        Just data ->
+                            List.Extra.getAt 1 data.headers
 
                 numericalData =
                     case csvData of
@@ -131,7 +150,7 @@ update msg model =
                             []
 
                         Just data ->
-                            CsvData.toPointList data
+                            CsvData.toPointList 0 1 data
 
                 statistics =
                     case numericalData of
@@ -145,6 +164,9 @@ update msg model =
                 | csvText = Just content
                 , csvData = csvData
                 , data = numericalData
+                , header = CsvData.getHeader content
+                , xLabel = xLabel
+                , yLabel = yLabel
                 , statistics = statistics
               }
             , Cmd.none
@@ -173,7 +195,15 @@ mainRow model =
     row [ spacing 24, alignTop ]
         [ dataColumn model
         , statisticsPanel model
-        , visualDataDisplay model
+        , rightColumn model
+        ]
+
+
+rightColumn : Model -> Element Msg
+rightColumn model =
+    column [ spacing 8 ]
+        [ visualDataDisplay model
+        , el [ Font.size 11, moveRight 50, moveUp 70 ] (text <| model.header)
         ]
 
 
