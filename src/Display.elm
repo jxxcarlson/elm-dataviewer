@@ -1,4 +1,4 @@
-module Display exposing (correlationInfo, info, label, stringOfFloat)
+module Display exposing (correlationInfo, info, label, smallInfo, stringOfFloat)
 
 import Element exposing (..)
 import Element.Font as Font
@@ -13,6 +13,17 @@ info defaultLabel maybeLabel selector data =
             (text <| displayAverage selector data)
         , el []
             (text <| displayStdev selector data)
+        , el []
+            (text <| displayMinimum selector data)
+        , el []
+            (text <| displayMaximum selector data)
+        ]
+
+
+smallInfo : String -> Maybe String -> (Point -> Float) -> Data -> Element msg
+smallInfo defaultLabel maybeLabel selector data =
+    column [ spacing 5 ]
+        [ el [ Font.bold ] (text <| label defaultLabel maybeLabel)
         , el []
             (text <| displayMinimum selector data)
         , el []
@@ -37,6 +48,8 @@ correlationInfo data =
                     (text <| "m: " ++ stringOfFloat stats.a)
                 , el []
                     (text <| "b: " ++ stringOfFloat stats.b)
+                , el []
+                    (text <| "R2: " ++ stringOfFloat stats.r2)
                 ]
 
 

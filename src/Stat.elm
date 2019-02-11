@@ -58,6 +58,7 @@ stdev selector dataList =
 type alias Statistics =
     { a : Float
     , b : Float
+    , r2 : Float
     , xMin : Float
     , xMax : Float
     , leftDataPoint : Point
@@ -123,6 +124,9 @@ statistics data =
                 square x =
                     x * x
 
+                ssTot =
+                    List.sum (List.map (\y -> square (y - yMean)) ys)
+
                 xDeltaSquaredSum =
                     xs |> List.map (\x -> square (x - xMean)) |> List.sum
 
@@ -135,6 +139,15 @@ statistics data =
                 b =
                     (1 / determinant) * (-xSum * xySum + xsSquared * ySum)
 
+                fs =
+                    List.map (\x -> a * x + b) xs
+
+                ssRes =
+                    List.sum (List.map2 (\f y -> square (f - y)) fs ys)
+
+                r2 =
+                    1 - ssRes / ssTot
+
                 regressionPoint =
                     { x = rightDataPoint.x, y = a * rightDataPoint.x + b }
             in
@@ -143,6 +156,7 @@ statistics data =
                 , xMin = xMin
                 , a = a
                 , b = b
+                , r2 = r2
                 , leftDataPoint = leftDataPoint
                 , rightDataPoint = rightDataPoint
                 , regressionPoint = regressionPoint

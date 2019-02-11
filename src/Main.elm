@@ -222,10 +222,20 @@ statisticsPanel model =
             (text <| numberOfRecordsString model.csvData)
         , el []
             (text <| plotTypeAsString model.plotType)
-        , Display.info "x" model.xLabel .x model.data
+        , xInfoDisplay model
         , Display.info "y" model.yLabel .y model.data
         , Display.correlationInfo model.data
         ]
+
+
+xInfoDisplay : Model -> Element msg
+xInfoDisplay model =
+    case model.plotType of
+        TimeSeries ->
+            Display.smallInfo "x" model.xLabel .x model.data
+
+        ScatterPlot ->
+            Display.info "x" model.xLabel .x model.data
 
 
 plotTypeAsString : PlotType -> String
