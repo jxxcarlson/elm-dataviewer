@@ -142,26 +142,19 @@ update msg model =
             )
 
         Reset ->
-            ( { model | xMin = model.xMinOriginal, xMax = model.xMaxOriginal }, Cmd.none )
+            let
+                nextModel =
+                    { model | xMin = model.xMinOriginal, xMax = model.xMaxOriginal }
+
+                ( numericalData, statistics ) =
+                    recompute nextModel
+            in
+            ( { nextModel | data = numericalData, statistics = statistics }, Cmd.none )
 
         Recompute ->
             let
-                numericalData =
-                    case model.csvData of
-                        Nothing ->
-                            []
-
-                        Just data ->
-                            CsvData.toPointList 0 1 data
-                                |> Stat.filterData { xMin = model.xMin, xMax = model.xMax }
-
-                statistics =
-                    case numericalData of
-                        [] ->
-                            Nothing
-
-                        dataList ->
-                            Stat.statistics dataList
+                ( numericalData, statistics ) =
+                    recompute model
             in
             ( { model | data = numericalData, statistics = statistics }, Cmd.none )
 
@@ -217,6 +210,29 @@ update msg model =
               }
             , Cmd.none
             )
+
+
+recompute : Model -> ( Data, Maybe Statistics )
+recompute model =
+    let
+        numericalData =
+            case model.csvData of
+                Nothing ->
+                    []
+
+                Just data ->
+                    CsvData.toPointList 0 1 data
+                        |> Stat.filterData { xMin = model.xMin, xMax = model.xMax }
+
+        statistics =
+            case numericalData of
+                [] ->
+                    Nothing
+
+                dataList ->
+                    Stat.statistics dataList
+    in
+    ( numericalData, statistics )
 
 
 
