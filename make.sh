@@ -1,1 +1,1 @@
-elm make --debug src/Main.elm
+elm make src/Main.elm

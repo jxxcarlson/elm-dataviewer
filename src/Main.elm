@@ -302,7 +302,7 @@ statisticsPanel model =
         , Font.size 12
         , Background.color (rgb255 245 245 245)
         , width (px 200)
-        , height (px 510)
+        , height (px 515)
         , paddingXY 8 12
         , moveDown 40
         ]
