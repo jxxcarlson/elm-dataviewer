@@ -1,4 +1,4 @@
-module CsvData exposing (csv2, csv3, get, getColumn, getColumnAsFloats, getDataString, getHeader, toPointList)
+module CsvData exposing (csv2, csv3, dataState, get, getColumn, getColumnAsFloats, getHeader, intelligentGet, spectrum, toPointList)
 
 import Csv exposing (Csv)
 import List.Extra
@@ -16,15 +16,120 @@ csv3 =
 
 get : String -> Maybe Csv
 get str =
-    Just <| Csv.parse str
+    Just <| Csv.parse <| filter str
 
 
+intelligentGet : String -> String -> ( Maybe Csv, Maybe String )
+intelligentGet sep str =
+    case dataState sep str of
+        Nothing ->
+            ( Nothing, Nothing )
 
--- ("x,y\n" ++ str)
+        Just dataState_ ->
+            if dataState_.columns == 1 then
+                ( makeSeries str, Nothing )
+
+            else
+                ( get str, Just <| getHeader str )
 
 
-getDataString : String -> String
-getDataString str =
+makeSeries : String -> Maybe Csv
+makeSeries str =
+    let
+        str2 =
+            String.lines str
+                |> List.indexedMap (\n x -> String.fromInt n ++ "," ++ x)
+                |> String.join "\n"
+    in
+    get <| "n,value\n" ++ str2
+
+
+type alias DataState =
+    { headerStatus : HeaderStatus
+    , sep : String
+    , columns : Int
+    }
+
+
+type HeaderStatus
+    = HeaderPresent
+    | HeaderMissing
+    | HeaderUndetermined
+
+
+{-| Return Nothing if the string does not
+meet the criteria to be a Csv file. Otherwise
+return Just a record describing what kind
+of Csv file it is.
+-}
+dataState : String -> String -> Maybe DataState
+dataState sep str =
+    let
+        spectrum_ =
+            spectrum sep str
+    in
+    case List.length spectrum_ of
+        0 ->
+            Nothing
+
+        1 ->
+            let
+                columns =
+                    (List.head spectrum_ |> Maybe.withDefault 0) + 1
+            in
+            case columns of
+                1 ->
+                    Just { headerStatus = HeaderUndetermined, sep = sep, columns = columns }
+
+                _ ->
+                    Just { headerStatus = HeaderMissing, sep = sep, columns = columns }
+
+        2 ->
+            let
+                lo =
+                    List.Extra.getAt 0 spectrum_ |> Maybe.withDefault 0
+
+                columns =
+                    (List.Extra.getAt 1 spectrum_ |> Maybe.withDefault 0) + 1
+            in
+            if lo == 0 && columns > 0 then
+                Just { headerStatus = HeaderPresent, sep = sep, columns = columns }
+
+            else
+                Nothing
+
+        _ ->
+            Nothing
+
+
+{-| Return the "comma spectrum" of a string.
+Example:
+
+> examine "," csv2
+> [0,1] : List Int
+> examine "," csv3
+> [2] : List Int
+
+A string whose spectrum has length 1 or 2
+is "good". If it has length 1, all lines
+have the same number of separators. If it
+has length two, and has the form [0,n] where
+n > 0, then it likely consists of a header
+followed by good data with n+1 records per line.
+
+-}
+spectrum : String -> String -> List Int
+spectrum sep str =
+    str
+        |> String.lines
+        |> List.map (String.indices sep)
+        |> List.map List.length
+        |> List.Extra.unique
+        |> List.sort
+
+
+filter : String -> String
+filter str =
     str
         |> String.lines
         |> List.filter (\x -> String.contains "," x)

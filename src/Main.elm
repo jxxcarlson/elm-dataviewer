@@ -126,7 +126,7 @@ update msg model =
         CsvLoaded content ->
             let
                 csvData =
-                    CsvData.get (CsvData.getDataString content)
+                    CsvData.get content
 
                 xLabel =
                     case csvData of
