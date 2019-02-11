@@ -58,7 +58,7 @@ type alias Model =
     , csvText : Maybe String
     , csvData : Maybe Csv
     , data : Data
-    , header : String
+    , header : Maybe String
     , statistics : Maybe Statistics
     , xLabel : Maybe String
     , yLabel : Maybe String
@@ -86,7 +86,7 @@ init flags =
       , csvText = Nothing
       , csvData = Nothing
       , data = []
-      , header = ""
+      , header = Nothing
       , statistics = Nothing
       , plotType = TimeSeries
       , xLabel = Nothing
@@ -125,8 +125,8 @@ update msg model =
 
         CsvLoaded content ->
             let
-                csvData =
-                    CsvData.get content
+                ( csvData, header ) =
+                    CsvData.intelligentGet "," content
 
                 xLabel =
                     case csvData of
@@ -164,7 +164,7 @@ update msg model =
                 | csvText = Just content
                 , csvData = csvData
                 , data = numericalData
-                , header = CsvData.getHeader content
+                , header = header
                 , xLabel = xLabel
                 , yLabel = yLabel
                 , statistics = statistics
@@ -203,8 +203,18 @@ rightColumn : Model -> Element Msg
 rightColumn model =
     column [ spacing 8 ]
         [ visualDataDisplay model
-        , el [ Font.size 11, moveRight 50, moveUp 70 ] (text <| model.header)
+        , el [ Font.size 11, moveRight 50, moveUp 70 ] (text <| headerString model)
         ]
+
+
+headerString : Model -> String
+headerString model =
+    case model.header of
+        Nothing ->
+            "No header"
+
+        Just str ->
+            str
 
 
 dataColumn : Model -> Element Msg

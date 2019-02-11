@@ -1,4 +1,4 @@
-module CsvData exposing (csv2, csv3, dataState, get, getColumn, getColumnAsFloats, getHeader, intelligentGet, spectrum, toPointList)
+module CsvData exposing (csv2, csv3, get, getColumn, getColumnAsFloats, intelligentGet, toPointList)
 
 import Csv exposing (Csv)
 import List.Extra
