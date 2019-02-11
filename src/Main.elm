@@ -310,10 +310,30 @@ statisticsPanel model =
             (text <| numberOfRecordsString model.csvData)
         , el []
             (text <| plotTypeAsString model.plotType)
-        , xInfoDisplay model
-        , Display.info "y" model.yLabel .y model.data
-        , Display.correlationInfo model.data
+        , showIfNot (model.csvData == Nothing) <| xInfoDisplay model
+        , showIfNot (model.csvData == Nothing) <| Display.info "y" model.yLabel .y model.data
+        , showIfNot (model.csvData == Nothing) <| Display.correlationInfo model.data
         ]
+
+
+showIf : Bool -> Element msg -> Element msg
+showIf condition element =
+    case condition of
+        True ->
+            element
+
+        False ->
+            Element.none
+
+
+showIfNot : Bool -> Element msg -> Element msg
+showIfNot condition element =
+    case condition of
+        True ->
+            Element.none
+
+        False ->
+            element
 
 
 xInfoDisplay : Model -> Element msg
