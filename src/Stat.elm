@@ -11,24 +11,40 @@ type alias Data =
     List Point
 
 
+{-| A `Statistics` value holds information like
+the mean and standard deviation of the x and y
+values of `Data` value (list of points), as well
+as the coefficients `m` and `b` of the regression
+line, the `R^2` value, etc. Compute using
+`statistics data`.
+-}
 type alias Statistics =
     { m : Float
     , b : Float
+    , n : Int
     , r2 : Float
     , xMin : Float
     , xMax : Float
+    , xMean : Float
+    , yMean : Float
     , leftDataPoint : Point
     , rightDataPoint : Point
     , regressionPoint : Point
     }
 
 
+{-| A `Filter` value contains the information
+needed to apply a filter to the data, e.g.,
+restrict the range of the x-values.
+-}
 type alias Filter =
     { xMin : Maybe Float
     , xMax : Maybe Float
     }
 
 
+{-| Apply a filter to the data
+-}
 filterData : Filter -> Data -> Data
 filterData filter data =
     case ( filter.xMin, filter.xMax ) of
@@ -39,6 +55,8 @@ filterData filter data =
             data
 
 
+{-| Compute the statistics of a `Data` value.
+-}
 statistics : Data -> Maybe Statistics
 statistics data =
     let
@@ -124,8 +142,11 @@ statistics data =
                     { x = rightDataPoint.x, y = m * rightDataPoint.x + b }
             in
             Just
-                { xMax = xMax
+                { n = nn
+                , xMax = xMax
                 , xMin = xMin
+                , xMean = xMean
+                , yMean = yMean
                 , m = m
                 , b = b
                 , r2 = r2
