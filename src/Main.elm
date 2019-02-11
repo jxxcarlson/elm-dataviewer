@@ -59,6 +59,8 @@ type alias Model =
     , csvData : Maybe Csv
     , data : Data
     , header : Maybe String
+    , xMin : Maybe String
+    , xMax : Maybe String
     , statistics : Maybe Statistics
     , xLabel : Maybe String
     , yLabel : Maybe String
@@ -71,6 +73,8 @@ type Msg
     = NoOp
     | InputXLabel String
     | InputYLabel String
+    | InputXMin String
+    | InputXMax String
     | CsvRequested
     | CsvSelected File
     | CsvLoaded String
@@ -86,6 +90,8 @@ init flags =
       , csvText = Nothing
       , csvData = Nothing
       , data = []
+      , xMax = Nothing
+      , xMin = Nothing
       , header = Nothing
       , statistics = Nothing
       , plotType = TimeSeries
@@ -112,6 +118,12 @@ update msg model =
 
         InputYLabel str ->
             ( { model | yLabel = Just str }, Cmd.none )
+
+        InputXMin str ->
+            ( { model | xMin = Just str }, Cmd.none )
+
+        InputXMax str ->
+            ( { model | xMax = Just str }, Cmd.none )
 
         CsvRequested ->
             ( model
@@ -295,7 +307,7 @@ defaults xLabel_ yLabel_ =
 --
 
 
-statisticsPanel : Model -> Element msg
+statisticsPanel : Model -> Element Msg
 statisticsPanel model =
     column
         [ spacing 12
@@ -313,6 +325,8 @@ statisticsPanel model =
         , showIfNot (model.csvData == Nothing) <| xInfoDisplay model
         , showIfNot (model.csvData == Nothing) <| Display.info "y" model.yLabel .y model.data
         , showIfNot (model.csvData == Nothing) <| Display.correlationInfo model.data
+        , showIfNot (model.csvData == Nothing) <| inputXMin model
+        , showIfNot (model.csvData == Nothing) <| inputXMax model
         ]
 
 
@@ -402,6 +416,26 @@ rawDataDisplay model =
 --
 -- INPUT FIELDS
 --
+
+
+inputXMin : Model -> Element Msg
+inputXMin model =
+    Input.text [ height (px 18), Font.size 12, paddingXY 8 0 ]
+        { onChange = InputXMin
+        , text = Display.label "xMin ..." model.xMin
+        , placeholder = Nothing
+        , label = Input.labelLeft [ moveDown 4 ] <| el [] (text "x min:")
+        }
+
+
+inputXMax : Model -> Element Msg
+inputXMax model =
+    Input.text [ height (px 18), Font.size 12, paddingXY 8 0 ]
+        { onChange = InputXMax
+        , text = Display.label "xMax ..." model.xMax
+        , placeholder = Nothing
+        , label = Input.labelLeft [ moveDown 4 ] <| el [] (text "x max:")
+        }
 
 
 inputXLabel : Model -> Element Msg
