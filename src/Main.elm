@@ -315,7 +315,7 @@ chart model =
         Just stats ->
             LineChart.viewCustom (defaults (Display.label "x" model.xLabel) (Display.label "y" model.yLabel))
                 [ LineChart.line Colors.red Dots.none "Data" model.data
-                , LineChart.line Colors.blue Dots.none "Regression" [ stats.leftDataPoint, stats.regressionPoint ]
+                , LineChart.line Colors.blue Dots.none "Regression" [ stats.leftRegressionPoint, stats.rightRegressionPoint ]
                 ]
 
 

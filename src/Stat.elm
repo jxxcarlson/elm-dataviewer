@@ -27,9 +27,12 @@ type alias Statistics =
     , xMax : Float
     , xMean : Float
     , yMean : Float
+    , xStdev : Float
+    , yStdev : Float
     , leftDataPoint : Point
     , rightDataPoint : Point
-    , regressionPoint : Point
+    , leftRegressionPoint : Point
+    , rightRegressionPoint : Point
     }
 
 
@@ -120,6 +123,15 @@ statistics data =
                 xDeltaSquaredSum =
                     xs |> List.map (\x -> square (x - xMean)) |> List.sum
 
+                yDeltaSquaredSum =
+                    ys |> List.map (\y -> square (y - yMean)) |> List.sum
+
+                xStdev =
+                    sqrt (xDeltaSquaredSum / (n - 1))
+
+                yStdev =
+                    sqrt (yDeltaSquaredSum / (n - 1))
+
                 determinant =
                     n * xDeltaSquaredSum
 
@@ -138,7 +150,10 @@ statistics data =
                 r2 =
                     1 - ssRes / ssTot
 
-                regressionPoint =
+                leftRegressionPoint =
+                    { x = leftDataPoint.x, y = m * leftDataPoint.x + b }
+
+                rightRegressionPoint =
                     { x = rightDataPoint.x, y = m * rightDataPoint.x + b }
             in
             Just
@@ -147,12 +162,15 @@ statistics data =
                 , xMin = xMin
                 , xMean = xMean
                 , yMean = yMean
+                , xStdev = xStdev
+                , yStdev = yStdev
                 , m = m
                 , b = b
                 , r2 = r2
                 , leftDataPoint = leftDataPoint
                 , rightDataPoint = rightDataPoint
-                , regressionPoint = regressionPoint
+                , leftRegressionPoint = leftRegressionPoint
+                , rightRegressionPoint = rightRegressionPoint
                 }
 
 
