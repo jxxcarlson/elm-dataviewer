@@ -45,7 +45,7 @@ correlationInfo data =
             column [ spacing 5 ]
                 [ el [ Font.bold ] (text <| "Correlation info (y = mx + b)")
                 , el []
-                    (text <| "m: " ++ stringOfFloat stats.a)
+                    (text <| "m: " ++ stringOfFloat stats.m)
                 , el []
                     (text <| "b: " ++ stringOfFloat stats.b)
                 , el []

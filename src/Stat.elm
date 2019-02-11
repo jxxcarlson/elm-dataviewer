@@ -12,7 +12,7 @@ type alias Data =
 
 
 type alias Statistics =
-    { a : Float
+    { m : Float
     , b : Float
     , r2 : Float
     , xMin : Float
@@ -42,17 +42,17 @@ filterData filter data =
 statistics : Data -> Maybe Statistics
 statistics data =
     let
-        m =
+        nn =
             List.length data
     in
-    case m < 2 of
+    case nn < 2 of
         True ->
             Nothing
 
         False ->
             let
                 n =
-                    toFloat m
+                    toFloat nn
 
                 xs =
                     List.map .x data
@@ -105,14 +105,14 @@ statistics data =
                 determinant =
                     n * xDeltaSquaredSum
 
-                a =
+                m =
                     (1 / determinant) * (n * xySum - xSum * ySum)
 
                 b =
                     (1 / determinant) * (-xSum * xySum + xsSquared * ySum)
 
                 fs =
-                    List.map (\x -> a * x + b) xs
+                    List.map (\x -> m * x + b) xs
 
                 ssRes =
                     List.sum (List.map2 (\f y -> square (f - y)) fs ys)
@@ -121,12 +121,12 @@ statistics data =
                     1 - ssRes / ssTot
 
                 regressionPoint =
-                    { x = rightDataPoint.x, y = a * rightDataPoint.x + b }
+                    { x = rightDataPoint.x, y = m * rightDataPoint.x + b }
             in
             Just
                 { xMax = xMax
                 , xMin = xMin
-                , a = a
+                , m = m
                 , b = b
                 , r2 = r2
                 , leftDataPoint = leftDataPoint
