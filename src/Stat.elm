@@ -1,5 +1,19 @@
 module Stat exposing (Data, Point, Statistics, average, filterData, maximum, minimum, statistics, stdev)
 
+{- \ The aim of this library is to copmute statistics for 2D data, of type
+   `Data = List Point`, where `Paint = { x : Float , y : Float }.  Thus, if
+   data is of type `Data`, you would calculate the aveerage of the x-values
+   as in `average .x data`.  To get the full packate of statisitcal information
+   on such a value, use `statistis data`.  The result is a value of type
+   `Statitiscs`, described in detail below. It is a record containting the
+   mean and standard deviation of the x and y values, the coefficeints
+   `m` and `b` (as in `y = mx + b` of the regression line, the `R^2` coefficient,
+   etc.
+   )
+
+
+-}
+
 
 type alias Point =
     { x : Float
@@ -46,10 +60,25 @@ type alias Filter =
     }
 
 
-{-| Apply a filter to the data
+{-| Apply filters to the data, This is set
+up as a pipeline so that other filters
+can be added later. We may have to go
+with different architectue if we have
+may filters -- best to avoid too many
+repeated list traversals.
 -}
 filterData : Filter -> Data -> Data
 filterData filter data =
+    data
+        |> restrictXRange filter
+
+
+{-| Reststrict the range of x-values.
+Note that the filter is the identity map
+if either of xMin or yMin has value Nothing.
+-}
+restrictXRange : Filter -> Data -> Data
+restrictXRange filter data =
     case ( filter.xMin, filter.xMax ) of
         ( Just xMin, Just xMax ) ->
             List.filter (\point -> point.x >= xMin && point.x <= xMax) data

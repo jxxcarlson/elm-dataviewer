@@ -1,4 +1,42 @@
-module CsvData exposing (get, getColumn, getColumnAsFloats, intelligentGet, toPointList)
+module CsvData exposing (get, getColumnAsFloats, getColumnAsStrings, getPointList, intelligentGet)
+
+{-| The aim of this library is to provide functions for extracting csv data from
+strings, and for extracting columns of data and list of points from csv data. Asuume
+that you already have valid Csv data. Then
+
+       getColumnAsFloats k csv
+
+will extract a list of floating point numbers from column `k` of the data `csv`.
+In the same vein,
+
+       getPointList i j csv
+
+will return a list of points using the data from columns i and column j.
+
+Getting csv data out of a string would be trivial if all data followed
+reasnoable conventions, as in the case of the data below:
+
+    Global Land and Ocean Temperature Anomalies
+    January-December 1880-2016
+    Units: Degrees Celsius
+    Base Period: 1901-2000
+    Year,Value
+    1880,-0.12
+    1881,-0.07
+    ...
+    2015,0.91
+    2016,0.95
+
+In this example there are four lines of header text, distinguished by the
+fact that they contain no commans. At the fifth line, csv data begins,
+giving names to the columns. The rest is good data: pairs of numbers.
+The function `intelligentGet sep str` tries its best to return good
+csv data from the string `str` using the separator `sep`, typically `","`.
+It returns a tuple `(Maybe Csv, Maybe String)`. If succesful, the return
+value is `(Just csv, Just header)`, where `csv : Csv` is good data and
+`header` is the header as discussed above. More details on this below.
+
+-}
 
 import Csv exposing (Csv)
 import List.Extra
@@ -51,6 +89,9 @@ intelligentGet sep str =
                 ( get str, Just <| getHeader str )
 
 
+{-| Turn data of the form "23.1\\n61.5\\n8.4" into
+data of the form "n,value\\n1,23.1\\n2,61.5\\n3,8.4".
+-}
 makeSeries : String -> Maybe Csv
 makeSeries str =
     let
@@ -133,6 +174,10 @@ spectrum sep str =
         |> List.sort
 
 
+{-| filter str returns a string representing potential
+csv records: a string of parts separated by "\\n" where
+each part contains at least one commna. Veru crude!
+-}
 filter : String -> String
 filter str =
     str
@@ -141,6 +186,12 @@ filter str =
         |> String.join "\n"
 
 
+{-| Get the header of a CSV file: the part
+before the data begins. Ih the string
+"These are points on a sqaure\\nx,y\\n0,0\\n1,0\\n1,1,\\n0,1".
+the header is "These are points on a square".
+The next line, "x,y" gives the column headings, which are different.
+-}
 getHeader : String -> String
 getHeader str =
     str
@@ -149,19 +200,26 @@ getHeader str =
         |> String.join "\n"
 
 
-getColumn : Int -> Csv -> List String
-getColumn k csv =
+{-| Return column k of Csv data.
+-}
+getColumnAsStrings : Int -> Csv -> List String
+getColumnAsStrings k csv =
     List.map (List.Extra.getAt k) csv.records |> Maybe.Extra.values
 
 
+{-| Return column k of Csv data, converted to Floats
+-}
 getColumnAsFloats : Int -> Csv -> List Float
 getColumnAsFloats k csv =
     List.map (Maybe.andThen String.toFloat << List.Extra.getAt k) csv.records
         |> Maybe.Extra.values
 
 
-toPointList : Int -> Int -> Csv -> Data
-toPointList i j csv =
+{-| Extract columns i and j from Csv data and return
+the corresponding list of points.
+-}
+getPointList : Int -> Int -> Csv -> Data
+getPointList i j csv =
     let
         xs =
             getColumnAsFloats i csv

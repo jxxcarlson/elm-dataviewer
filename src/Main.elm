@@ -185,7 +185,7 @@ update msg model =
                             []
 
                         Just data ->
-                            CsvData.toPointList 0 1 data
+                            CsvData.getPointList 0 1 data
 
                 statistics =
                     case numericalData of
@@ -221,7 +221,7 @@ recompute model =
                     []
 
                 Just data ->
-                    CsvData.toPointList 0 1 data
+                    CsvData.getPointList 0 1 data
                         |> Stat.filterData { xMin = model.xMin, xMax = model.xMax }
 
         statistics =
