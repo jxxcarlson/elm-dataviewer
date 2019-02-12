@@ -2,6 +2,8 @@
 
 Statistics and graphs for 2-column csv files — a start.  The example above is time series data.  I plan to add other data/plot types later, e.g. scatter plots.  Also, the ability to grab data directly from a URL.
 
+**Note.** I've put the `CsvData` and `Stat` modules in a library [jxxcarlson/elm-stat](https://package.elm-lang.org/packages/jxxcarlson/elm-stat/latest/).  A more evolved version of this app can be found there if you browser source.
+
 The data used in the example above is in the file `temperature-anomalies.csv` in this repo. It is a list of global temperature anomalies for the period 1880-2017 from [www.climate.gov](http://www.climate.gov). The annual temperature anomaly is the difference between the global mean temperature and the long-term average global temperature. For this data set, the long-term average is computed for the period 1901-2000. Here is what the data looks like:
 
 ```
